@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  
+  <mapper namespace="com.ssm.mapper.StudentMapper">
+  <resultMap type="Student" id="studentMap">
+  	<id property="name" column="name" />
+  	<!-- <result property="" column=""/> -->
+  </resultMap>
+  	<sql id="studentColums">
+		id,name,age,gender,address
+    </sql>
+     <resultMap type="Student" id="studentInfoMap">
+	  	<id property="id" column="id" />
+	  	<result property="name" column="name"/>
+	  	<result property="gender" column="gender"/>
+	  	<result property="address" column="address"/>
+	  	<association property="banji" javaType="Banji">
+	  		<id property="id" column="banjiId"/>
+	  		<result property="name" column="banjiName"/>
+	  	</association>
+ 	 </resultMap>
+ 	 <select id="findStudentInfoById" parameterType="int" resultMap="studentInfoMap">
+ 	 	SELECT s.id,s.name,s.gender,s.address,b.id as banjiId , b.name AS banjiName
+		FROM student AS s INNER JOIN banji AS b
+		ON s.banji_id=b.id
+		WHERE s.id=#{id};
+ 	 </select>
+  	<!-- 通过id查找学生 -->
+  	<select id="findById" parameterType="java.lang.Integer" resultType="Student">
+		select <include refid="studentColums"/> from student where id=#{id}
+	</select>
+	<!-- 查找所有学生 -->
+  	<select id="findAll"  resultType="Student">
+		select * from student
+	</select>
+		<!-- 根据名字查找学生 -->
+  	<select id="findByName" parameterType="string" resultType="Student">
+		select * from student where name like '%${value}%'
+	</select>
+		<!-- 根据页数和显示个数来展示学生 -->
+  	<select id="findByPage" parameterType="map" resultType="Student">
+		select <include refid="studentColums"/> from student 
+		limit #{offset},#{pageSize}
+	</select>
+		<!-- 根据页数和显示个数来展示学生 -->
+  	<select id="findByPage1111"  resultType="Student">
+		select <include refid="studentColums"/> from student 
+		limit #{offset},#{pageSize}
+	</select>
+		<!-- 根据SerachVom名字模糊查找学生 -->
+  	<select id="findBySearchVO" parameterType="SerachVo" resultType="Student">
+		select <include refid="studentColums"/> 
+		from student where name like '%${student.name}%'
+	</select>
+	
+	<insert id="add" parameterType="Student" >
+		INSERT INTO student(NAME,age,gender,address, banji_id) 
+		VALUES(#{name},#{age},#{gender},#{address},#{banji.id})
+	</insert>
+  	<update id="deleteId" parameterType="Student" >
+  		delete from student where id=#{id}
+  	</update>
+  	<update id="update" parameterType="Student" >
+  		update student
+        set name=#{name},age=#{age},gender=#{gender},address=#{address}
+        where id=#{id}
+  	</update>
+  	
+  	<!--   动态拼接sql -->
+  	
+  	<select id="findByCondition" parameterType="SearchTest" resultMap="studentMap">
+  		select <include refid="studentColums"/> from student 
+  		<!-- where 标签可以自动添加where，同时处理sql语句中第一个and关键字 -->
+  		<where>
+  			<if test="name!=null">
+  				and stu_name like '%${name}%'
+  			</if>
+  			<if test="gender!=null">
+  				and gender =#{gender}
+  			</if>
+  		</where>
+  	</select>
+  	<select id="getTotalCountByCondition" parameterType="StudentSearchCondition" resultType="int">
+  		select count(id) 
+  		from student
+  		<where>
+  			<if test="name!=null">
+  				and stu_name like '%${name}%'
+  			</if>
+  			<if test="age!=null ">
+				and age = #{age}
+			</if>
+			<if test="gender!=null and gender!='' ">
+				and gender = #{gender}
+			</if>
+  		</where>
+  	</select>
+  	 	<select id="findPageBeanList"  resultMap="studentMap">
+  		select <include refid="studentColums"></include>
+  		from student
+  		<where>
+  			<if test="condition.name!=null">
+  				and stu_name like '%${condition.name}%'
+  			</if>
+  			<if test="condition.age!=null ">
+				and age = #{condition.age}
+			</if>
+			<if test="condition.gender!=null and condition.gender!='' ">
+				and gender = #{condition.gender}
+			</if>
+  		</where>
+  		limit #{offset},#{condition.pageSize}
+  	</select>
+  	<!-- 动态更新 -->
+  	<update id="dynamicUpdate" parameterType="Student">
+  	update student
+  	  <!-- set标签会自动判断哪一个是最后一个字段，最自动去掉最后一个的“，” -->
+	  	<set>
+	  		<if test="name!=null">
+	  			stu_name=#{name},
+	  		</if>
+	  		<if test="gender!=null">
+	         	gender=#{gender},
+	     	 </if>
+	     	 <if test="address!=null">
+	         	address=#{address},
+	     	 </if>
+	  	</set>
+  		where id=#{id}
+  	</update>
+  </mapper>
